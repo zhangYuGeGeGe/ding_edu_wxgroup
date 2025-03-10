@@ -1,35 +1,20 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DINGDINGDING!!!</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-        }
-        h1 {
-            font-size: 3rem;
-            color: #ff0000;
-            animation: ding 1s infinite;
-        }
-        @keyframes ding {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.2);
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    <title>学号验证网页</title>
 </head>
+
 <body>
-<h1>DING DING DING！！！</h1>
+<div class="container">
+    <input type="text" id="studentIdInput" placeholder="请输入你的学号">
+    <button onclick="validateStudentId()">确认</button>
+    <div id="imageContainer"></div>
+</div>
+<script src="script.js"></script>
 </body>
+
 </html>
