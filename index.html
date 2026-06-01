@@ -2,34 +2,640 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DINGDINGDING!!!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>勾股定理·网格探究 | 直角三角形三边关系实验（无滚动条版）</title>
     <style>
+        /* 彻底消灭全局滚动条 - 适配PPT嵌入 */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;  /* 关键：完全禁用滚动条 */
+            background: #eef5e8;
+        }
+
         body {
+            font-family: 'Segoe UI', 'Roboto', 'Noto Sans', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            padding: 8px;  /* 极小边距，适应PPT安全区域 */
+        }
+
+        /* 主容器：高度自适应但保证不溢出，宽度100%且无滚动 */
+        .experiment-container {
+            width: 100%;
+            max-width: 1300px;
+            height: auto;
+            max-height: 98vh;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.15);
+            overflow: hidden;  /* 防止内部溢出产生滚动条 */
+            padding: 0.9rem 1.2rem 0.9rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 标题区紧凑 */
+        .title-wrapper {
+            text-align: center;
+            margin-bottom: 0.6rem;
+            flex-shrink: 0;
+        }
+        .main-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e4a2f;
+            letter-spacing: -0.2px;
+            display: inline-block;
+            background: #f8fff4;
+            padding: 0 18px 4px 18px;
+            border-bottom: 2px solid #6fbf4c;
+        }
+
+        .instruction {
+            font-size: 0.7rem;
+            color: #4a6741;
+            background: #f4faf0;
+            padding: 4px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            margin: 4px 0 8px 0;
+            font-weight: 500;
+        }
+
+        /* 两栏布局 - 弹性高度控制 */
+        .two-columns {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 18px;
+            flex: 1;
+            min-height: 0;  /* flex限制溢出关键 */
+        }
+
+        .left-area {
+            flex: 0 0 42%;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-area {
+            flex: 0 0 calc(58% - 18px);
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .demo-area {
+            background: #fefef7;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 10px 10px 8px 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        /* 画布使用固定宽高比，但宽度自适应，确保不溢出 */
+        canvas {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            cursor: crosshair;
+            touch-action: none;
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            aspect-ratio: 750 / 500;
+        }
+
+        .dot-hint {
+            font-size: 0.6rem;
+            text-align: center;
+            color: #7c6b4a;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .record-section {
+            background: #fff9ef;
+            border-radius: 20px;
+            padding: 0.7rem 1rem 0.8rem 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .record-header h3 {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            font-size: 1rem;
+            color: #a55d2a;
+            font-weight: 600;
         }
-        h1 {
-            font-size: 3rem;
-            color: #ff0000;
-            animation: ding 1s infinite;
+
+        button {
+            background: #3c8c40;
+            border: none;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.7rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        @keyframes ding {
-            0%, 100% {
-                transform: scale(1);
+
+        button:hover {
+            background: #2d6e30;
+            transform: scale(0.96);
+        }
+
+        .clear-btn {
+            background: #bc9a6c;
+        }
+        .clear-btn:hover {
+            background: #9c7a4e;
+        }
+
+        /* 表格容器：限制最大高度，滚动仅在内部纵向（但整体无滚动条），宽度无溢出 */
+        .table-wrapper {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-radius: 16px;
+            border: 1px solid #e9e0cf;
+            background: white;
+            margin-bottom: 8px;
+        }
+
+        /* 表格：紧凑且不产生横向滚动条 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Segoe UI', 'Roboto', monospace;
+            font-size: 0.7rem;
+            table-layout: fixed;
+        }
+
+        .data-table th {
+            background: #e7dbbc;
+            padding: 7px 3px;
+            position: sticky;
+            top: 0;
+            font-weight: 700;
+            color: #4a3920;
+            font-size: 0.68rem;
+            text-align: center;
+        }
+
+        .data-table td {
+            border-bottom: 1px solid #f0e4ce;
+            padding: 6px 3px;
+            text-align: center;
+            font-size: 0.65rem;
+        }
+
+        /* 固定列宽，防止溢出 */
+        .data-table th:nth-child(1) { width: 6%; }
+        .data-table th:nth-child(2) { width: 9%; }
+        .data-table th:nth-child(3) { width: 9%; }
+        .data-table th:nth-child(4) { width: 10%; }
+        .data-table th:nth-child(5) { width: 10%; }
+        .data-table th:nth-child(6) { width: 10%; }
+        .data-table th:nth-child(7) { width: 13%; }
+        .data-table th:nth-child(8) { width: 11%; }
+        .data-table th:nth-child(9) { width: 8%; }
+
+        .data-table tr:hover {
+            background: #fff3e0;
+        }
+
+        .empty-row td {
+            color: #b88b4a;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .insight-text {
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: #5a3e1f;
+            background: #fef0d8;
+            padding: 7px 10px;
+            border-radius: 18px;
+            text-align: center;
+            margin-top: 6px;
+            border-left: 3px solid #d99e3e;
+            flex-shrink: 0;
+        }
+
+        footer {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 0.55rem;
+            color: #8aa57a;
+            flex-shrink: 0;
+        }
+
+        /* 超宽屏或小尺寸做微调，确保绝无滚动条 */
+        @media (max-width: 1000px) {
+            .experiment-container {
+                padding: 0.7rem;
             }
-            50% {
-                transform: scale(1.2);
+            .main-title { font-size: 1.2rem; }
+            .two-columns {
+                gap: 12px;
+            }
+            .record-header h3 {
+                font-size: 0.9rem;
+            }
+            .data-table th, .data-table td {
+                padding: 4px 2px;
+                font-size: 0.6rem;
             }
         }
     </style>
 </head>
 <body>
-<h1>DINGDINGDING！！！</h1>
+<div class="experiment-container">
+    <div class="title-wrapper">
+        <div class="main-title">📐 直角三角形三边关系互动实验</div>
+        <div style="text-align: center;">
+            <div class="instruction">✋ 拖拽顶点 A（水平）或 B（竖直） | 表格验证 a² + b² = c² | 无滚动条·完整呈现</div>
+        </div>
+    </div>
+
+    <div class="two-columns">
+        <!-- 左侧区域：三角形演示区 -->
+        <div class="left-area">
+            <div class="demo-area">
+                <div class="canvas-wrapper">
+                    <canvas id="triangleCanvas" width="750" height="500" style="width:100%; height:auto; max-width:100%; aspect-ratio:750/500"></canvas>
+                </div>
+                <div class="dot-hint">🔵 A(水平拖拽) 🔴 B(竖直拖拽) | 直角C固定 | 黑色大字母 | 边长a,b,c在外侧</div>
+            </div>
+        </div>
+
+        <!-- 右侧区域：实验数据记录表 -->
+        <div class="right-area">
+            <div class="record-section">
+                <div class="record-header">
+                    <h3>📋 实验数据表 (a²+b²=c²验证)</h3>
+                    <div>
+                        <button id="clearAllRecordsBtn" class="clear-btn">🗑 清空记录</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>a (BC)</th>
+                                <th>b (AC)</th>
+                                <th>c (AB)</th>
+                                <th>a²</th>
+                                <th>b²</th>
+                                <th>a²+b²</th>
+                                <th>c²</th>
+                                <th>验证</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr class="empty-row"><td colspan="9">📭 拖拽顶点后记录数据，自动验证勾股定理</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="insight-text">
+                    💡 a² + b² 与 c² 始终相等 ✅ 勾股定理成立
+                </div>
+                <div style="margin-top: 5px; font-size:0.6rem; color:#a57842; text-align:center;">
+                    拖拽结束弹窗询问，确认后记录
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>🧪 网格间距1单位，直角边整数，斜边保留两位小数 | 固定直角顶点C，AC水平、BC竖直</footer>
+</div>
+
+<script>
+    (function(){
+        // ---------- 固定直角坐标系: 直角顶点C固定 ----------
+        const canvas = document.getElementById('triangleCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = 750, height = 500;
+        canvas.width = width;
+        canvas.height = height;
+        
+        const GRID_PX = 15;    
+        const C_logic = { x: 14, y: 24 };   // 逻辑坐标 (14,24)
+        const pointC = { x: C_logic.x * GRID_PX, y: C_logic.y * GRID_PX };
+        
+        // 可动点 A: 水平右侧，B: 竖直上方
+        let A_logic = { x: 32, y: C_logic.y };
+        let B_logic = { x: C_logic.x, y: 10 };
+        
+        const minLogicX = 4, maxLogicX = Math.floor((width - GRID_PX) / GRID_PX) - 2;
+        const minLogicY = 4, maxLogicY = Math.floor((height - GRID_PX) / GRID_PX) - 2;
+        
+        function enforceA(val) {
+            let newX = Math.round(val.x);
+            newX = Math.min(Math.max(newX, C_logic.x + 1), maxLogicX);
+            return { x: newX, y: C_logic.y };
+        }
+        
+        function enforceB(val) {
+            let newY = Math.round(val.y);
+            newY = Math.min(Math.max(newY, minLogicY), C_logic.y - 1);
+            return { x: C_logic.x, y: newY };
+        }
+        
+        A_logic = enforceA(A_logic);
+        B_logic = enforceB(B_logic);
+        let pointA = { x: A_logic.x * GRID_PX, y: A_logic.y * GRID_PX };
+        let pointB = { x: B_logic.x * GRID_PX, y: B_logic.y * GRID_PX };
+        
+        function updatePixelPoints() {
+            pointA = { x: A_logic.x * GRID_PX, y: A_logic.y * GRID_PX };
+            pointB = { x: B_logic.x * GRID_PX, y: B_logic.y * GRID_PX };
+        }
+        updatePixelPoints();
+        
+        function computeData() {
+            let a = Math.abs(B_logic.y - C_logic.y);      // BC
+            let b = Math.abs(A_logic.x - C_logic.x);      // AC
+            let c_raw = Math.hypot(a, b);
+            let a_sq = a * a;
+            let b_sq = b * b;
+            let c_sq = c_raw * c_raw;
+            let sum_ab_sq = a_sq + b_sq;
+            return { a, b, c_raw, a_sq, b_sq, c_sq, sum_ab_sq };
+        }
+        
+        function drawGrid() {
+            ctx.save();
+            ctx.strokeStyle = "#d9e0cb";
+            ctx.lineWidth = 0.6;
+            for(let x = 0; x <= width; x += GRID_PX) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+            }
+            for(let y = 0; y <= height; y += GRID_PX) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+            }
+            ctx.restore();
+        }
+        
+        function getOutwardNormal(p1, p2, triangleThird) {
+            let dx = p2.x - p1.x;
+            let dy = p2.y - p1.y;
+            let len = Math.hypot(dx, dy);
+            if(len < 0.001) return { x: 0, y: 0 };
+            let perpX = -dy / len;
+            let perpY = dx / len;
+            let mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+            let toThird = { x: triangleThird.x - mid.x, y: triangleThird.y - mid.y };
+            let dot = toThird.x * perpX + toThird.y * perpY;
+            if(dot > 0) return { x: -perpX, y: -perpY };
+            else return { x: perpX, y: perpY };
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            drawGrid();
+            const { a, b, c_raw } = computeData();
+            
+            ctx.beginPath();
+            ctx.moveTo(pointA.x, pointA.y);
+            ctx.lineTo(pointB.x, pointB.y);
+            ctx.lineTo(pointC.x, pointC.y);
+            ctx.closePath();
+            ctx.fillStyle = "#fff5e6bb";
+            ctx.fill();
+            ctx.strokeStyle = "#3a5a2e";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // 直角符号
+            ctx.beginPath();
+            ctx.moveTo(pointC.x + 5, pointC.y);
+            ctx.lineTo(pointC.x + 5, pointC.y + 5);
+            ctx.lineTo(pointC.x, pointC.y + 5);
+            ctx.fillStyle = "#d98c2bcc";
+            ctx.fill();
+            ctx.strokeStyle = "#b45f1b";
+            ctx.stroke();
+            
+            // 顶点黑色大字
+            ctx.font = "bold 26px 'Segoe UI', 'Noto Sans'";
+            ctx.fillStyle = "#000000";
+            ctx.fillText("A", pointA.x + 12, pointA.y - 12);
+            ctx.fillText("B", pointB.x - 26, pointB.y - 12);
+            ctx.fillText("C", pointC.x + 12, pointC.y + 10);
+            
+            // 顶点圆点
+            ctx.beginPath(); ctx.arc(pointA.x, pointA.y, 9, 0, 2*Math.PI); ctx.fillStyle = "#e34234"; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.beginPath(); ctx.arc(pointB.x, pointB.y, 9, 0, 2*Math.PI); ctx.fillStyle = "#3c8fc9"; ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.arc(pointC.x, pointC.y, 9, 0, 2*Math.PI); ctx.fillStyle = "#6fbf4c"; ctx.fill(); ctx.stroke();
+            
+            // 边长数值
+            ctx.font = "bold 14px 'Segoe UI'";
+            ctx.fillStyle = "#2c5a2c";
+            let midBC = { x: (pointB.x + pointC.x)/2 + 8, y: (pointB.y + pointC.y)/2 };
+            ctx.fillText(`${a}`, midBC.x, midBC.y);
+            let midAC = { x: (pointA.x + pointC.x)/2, y: (pointA.y + pointC.y)/2 - 12 };
+            ctx.fillText(`${b}`, midAC.x, midAC.y);
+            let midAB = { x: (pointA.x + pointB.x)/2 + 5, y: (pointA.y + pointB.y)/2 - 8 };
+            ctx.fillText(`${c_raw.toFixed(2)}`, midAB.x, midAB.y);
+            
+            // 外侧字母 a,b,c
+            let normalBC = getOutwardNormal(pointB, pointC, pointA);
+            let midBC_out = { x: (pointB.x + pointC.x)/2 + normalBC.x * 28, y: (pointB.y + pointC.y)/2 + normalBC.y * 28 };
+            let normalAC = getOutwardNormal(pointA, pointC, pointB);
+            let midAC_out = { x: (pointA.x + pointC.x)/2 + normalAC.x * 28, y: (pointA.y + pointC.y)/2 + normalAC.y * 28 };
+            let normalAB = getOutwardNormal(pointA, pointB, pointC);
+            let midAB_out = { x: (pointA.x + pointB.x)/2 + normalAB.x * 30, y: (pointA.y + pointB.y)/2 + normalAB.y * 30 };
+            
+            ctx.font = "italic 24px 'Times New Roman', serif";
+            ctx.fillStyle = "#1f4f2b";
+            ctx.fillText("a", midBC_out.x, midBC_out.y);
+            ctx.fillText("b", midAC_out.x, midAC_out.y);
+            ctx.fillText("c", midAB_out.x, midAB_out.y);
+        }
+        
+        function refresh() { draw(); }
+        
+        // 拖拽逻辑
+        let draggingVertex = null;
+        let dragEndTimer = null;
+        let pendingRecord = false;
+        
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+            if(e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            let canvasX = (clientX - rect.left) * scaleX;
+            let canvasY = (clientY - rect.top) * scaleY;
+            canvasX = Math.min(Math.max(canvasX, 5), width-5);
+            canvasY = Math.min(Math.max(canvasY, 5), height-5);
+            let logicX = Math.round(canvasX / GRID_PX);
+            let logicY = Math.round(canvasY / GRID_PX);
+            return { x: logicX, y: logicY };
+        }
+        
+        function onPointerStart(e) {
+            e.preventDefault();
+            const coord = getCanvasCoords(e);
+            const distA = Math.hypot(coord.x - A_logic.x, coord.y - A_logic.y);
+            const distB = Math.hypot(coord.x - B_logic.x, coord.y - B_logic.y);
+            if(distA < 2.0) draggingVertex = 'A';
+            else if(distB < 2.0) draggingVertex = 'B';
+            else return;
+            canvas.style.cursor = 'grabbing';
+            if(dragEndTimer) clearTimeout(dragEndTimer);
+        }
+        
+        function onPointerMove(e) {
+            if(!draggingVertex) return;
+            e.preventDefault();
+            const coord = getCanvasCoords(e);
+            if(draggingVertex === 'A') {
+                let newA = { x: coord.x, y: C_logic.y };
+                newA = enforceA(newA);
+                if(newA.x !== A_logic.x) {
+                    A_logic = newA;
+                    updatePixelPoints();
+                    refresh();
+                }
+            } else if(draggingVertex === 'B') {
+                let newB = { x: C_logic.x, y: coord.y };
+                newB = enforceB(newB);
+                if(newB.y !== B_logic.y) {
+                    B_logic = newB;
+                    updatePixelPoints();
+                    refresh();
+                }
+            }
+        }
+        
+        function askAndRecordIfConfirmed() {
+            if(pendingRecord) return;
+            pendingRecord = true;
+            const { a, b, c_raw, a_sq, b_sq, c_sq, sum_ab_sq } = computeData();
+            const isVerified = Math.abs(sum_ab_sq - c_sq) < 0.0001;
+            const verifySymbol = isVerified ? "✅ 成立" : "⚠️ 理论恒等";
+            const msg = `当前数据：\n\na (BC)=${a}   b (AC)=${b}   c (AB)=${c_raw.toFixed(3)}\n\na²=${a_sq}  b²=${b_sq}\na²+b²=${sum_ab_sq}\nc²=${c_sq.toFixed(3)}\n\n验证: ${verifySymbol}\n\n是否记录？`;
+            if(confirm(msg)) {
+                addRecordToTable(a, b, c_raw, a_sq, b_sq, c_sq, sum_ab_sq);
+            }
+            setTimeout(() => { pendingRecord = false; }, 300);
+        }
+        
+        function onPointerEnd(e) {
+            if(!draggingVertex) {
+                canvas.style.cursor = 'crosshair';
+                return;
+            }
+            draggingVertex = null;
+            canvas.style.cursor = 'crosshair';
+            if(dragEndTimer) clearTimeout(dragEndTimer);
+            dragEndTimer = setTimeout(() => askAndRecordIfConfirmed(), 50);
+        }
+        
+        canvas.addEventListener('mousedown', onPointerStart);
+        window.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerEnd);
+        canvas.addEventListener('touchstart', onPointerStart, {passive: false});
+        window.addEventListener('touchmove', onPointerMove, {passive: false});
+        window.addEventListener('touchend', onPointerEnd);
+        canvas.style.cursor = 'crosshair';
+        
+        // 存储与表格渲染
+        let records = [];
+        function loadRecords() {
+            const stored = localStorage.getItem('right_triangle_no_scroll_final');
+            if(stored) { try{ records = JSON.parse(stored); } catch(e){} }
+            renderTable();
+        }
+        function saveRecords() {
+            localStorage.setItem('right_triangle_no_scroll_final', JSON.stringify(records));
+            renderTable();
+        }
+        
+        function addRecordToTable(a, b, c_raw, a_sq, b_sq, c_sq, sum_ab_sq) {
+            records.unshift({
+                id: Date.now() + Math.random(),
+                a, b, c: c_raw.toFixed(2),
+                a_sq, b_sq, sum_ab_sq, c_sq: c_sq.toFixed(2)
+            });
+            if(records.length > 30) records.pop();
+            saveRecords();
+        }
+        
+        function clearAllRecords() {
+            if(confirm("清空所有实验记录？")) { records = []; saveRecords(); }
+        }
+        
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            if(records.length === 0) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="9">📭 拖拽顶点后根据提示记录数据，自动验证勾股定理</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '';
+            records.forEach((rec, idx) => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = idx+1;
+                row.insertCell(1).innerText = rec.a;
+                row.insertCell(2).innerText = rec.b;
+                row.insertCell(3).innerText = rec.c;
+                row.insertCell(4).innerText = rec.a_sq;
+                row.insertCell(5).innerText = rec.b_sq;
+                row.insertCell(6).innerText = rec.sum_ab_sq;
+                row.insertCell(7).innerText = rec.c_sq;
+                const isEqual = Math.abs(rec.sum_ab_sq - parseFloat(rec.c_sq)) < 0.001;
+                row.insertCell(8).innerText = isEqual ? "✅" : "⚠️";
+            });
+        }
+        
+        document.getElementById('clearAllRecordsBtn').addEventListener('click', clearAllRecords);
+        loadRecords();
+        refresh();
+    })();
+</script>
 </body>
 </html>
